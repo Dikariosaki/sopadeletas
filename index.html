@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sopa de Letras - Diccionario SST</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f2f2f2;
+        color: #333;
+      }
+      h1,
+      h2 {
+        text-align: center;
+      }
+      .puzzle-container {
+        display: block;
+        margin: 0 auto;
+        width: max-content;
+        padding: 10px;
+        background-color: #fff;
+        border: 2px solid #333;
+      }
+      table {
+        border-collapse: collapse;
+      }
+      td {
+        width: 30px;
+        height: 30px;
+        border: 1px solid #333;
+        text-align: center;
+        vertical-align: middle;
+        cursor: pointer;
+        user-select: none;
+        font-size: 18px;
+        font-weight: bold;
+      }
+      td.selected {
+        background-color: #cce5ff;
+      }
+      .controls {
+        text-align: center;
+        margin-top: 20px;
+      }
+      button {
+        padding: 8px 16px;
+        margin: 0 10px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      .definition {
+        margin-top: 20px;
+        padding: 10px;
+        background-color: #e6ffe6;
+        border: 1px solid #339933;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .word-list {
+        max-width: 600px;
+        margin: 30px auto;
+        background-color: #fff;
+        padding: 15px;
+        border: 2px solid #333;
+      }
+      .word-list ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      .word-list li {
+        margin: 5px 0;
+      }
+      .word-list li span {
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Sopa de Letras: Diccionario SST</h1>
+
+    <!-- Cuadrícula de la sopa de letras -->
+    <div class="puzzle-container">
+      <table id="puzzle"></table>
+    </div>
+
+    <!-- Sección que muestra la lista de palabras a buscar -->
+    <div class="word-list">
+      <h2>Palabras a buscar</h2>
+      <ul>
+        <li>
+          <span>COPASST</span>
+        </li>
+        <li><span>SST</span></li>
+        <li>
+          <span>SG-SST</span>
+        </li>
+        <li><span>SEGURIDAD</span></li>
+        <li>
+          <span>SALUD</span>
+        </li>
+        <li><span>EPP</span></li>
+        <li>
+          <span>RIESGOS</span>
+        </li>
+        <li>
+          <span>PREVENCIÓN</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Controles para interacción -->
+    <div class="controls">
+      <p>
+        <strong>Palabra seleccionada:</strong> <span id="currentWord"></span>
+      </p>
+      <button id="verifyBtn">Verificar palabra</button>
+      <button id="resetBtn">Limpiar selección</button>
+    </div>
+
+    <!-- Cuadro donde se muestra la definición -->
+    <div class="definition" id="definitionBox" style="display: none"></div>
+
+    <script>
+      // Matriz de 10x10 que contiene letras de la sopa de letras.
+      // Nota: La matriz puede ajustarse para incluir las palabras de forma horizontal, vertical o diagonal.
+      const grid = [
+        ["C", "O", "P", "A", "S", "S", "T", "X", "Y", "Z"],
+        ["S", "S", "T", "L", "O", "P", "Q", "R", "S", "T"],
+        ["E", "N", "R", "O", "G", "U", "R", "I", "D", "A"],
+        ["G", "U", "R", "I", "D", "A", "D", "E", "F", "G"],
+        ["U", "D", "E", "H", "I", "J", "K", "L", "M", "N"],
+        ["R", "I", "E", "S", "G", "O", "P", "Q", "R", "S"],
+        ["I", "T", "U", "V", "W", "X", "Y", "Z", "A", "B"],
+        ["D", "E", "F", "G", "H", "I", "J", "K", "L", "M"],
+        ["A", "N", "O", "P", "Q", "R", "S", "T", "U", "V"],
+        ["D", "E", "F", "G", "H", "I", "J", "K", "L", "M"],
+      ];
+
+      // Diccionario de palabras con su significado e importancia
+      const dictionary = {
+        COPASST:
+          "Comité Paritario de Seguridad y Salud en el Trabajo. Es fundamental para promover la participación conjunta entre empleador y trabajadores, permitiendo la identificación y solución de riesgos laborales.",
+        SST: "Seguridad y Salud en el Trabajo. Conjunto de acciones y políticas orientadas a prevenir accidentes y enfermedades laborales, garantizando el bienestar del personal.",
+        "SG-SST":
+          "Sistema de Gestión de Seguridad y Salud en el Trabajo. Integra políticas, procedimientos y recursos para gestionar y mejorar continuamente las condiciones laborales.",
+        SEGURIDAD:
+          "Estado de estar libre de peligros. Es esencial para prevenir accidentes y proteger la integridad de los trabajadores.",
+        SALUD:
+          "Estado de completo bienestar físico, mental y social. Una buena salud es vital para el rendimiento y calidad de vida de los empleados.",
+        EPP: "Equipo de Protección Personal. Instrumentos y dispositivos que protegen al trabajador frente a riesgos específicos en el ambiente laboral.",
+        RIESGOS:
+          "Posibilidades de ocurrencia de accidentes o daños. Su identificación y control son fundamentales para minimizar incidentes en el trabajo.",
+        PREVENCIÓN:
+          "Conjunto de acciones y medidas orientadas a evitar accidentes y enfermedades. Es la base para un ambiente laboral seguro.",
+      };
+
+      const table = document.getElementById("puzzle");
+      const currentWordSpan = document.getElementById("currentWord");
+      const definitionBox = document.getElementById("definitionBox");
+      let currentWord = "";
+
+      // Renderiza la cuadrícula en la tabla
+      for (let i = 0; i < grid.length; i++) {
+        const row = document.createElement("tr");
+        for (let j = 0; j < grid[i].length; j++) {
+          const cell = document.createElement("td");
+          cell.textContent = grid[i][j];
+          cell.dataset.row = i;
+          cell.dataset.col = j;
+          // Al hacer clic, se añade la letra a la palabra actual si aún no ha sido seleccionada
+          cell.addEventListener("click", function () {
+            if (!cell.classList.contains("selected")) {
+              cell.classList.add("selected");
+              currentWord += cell.textContent;
+              currentWordSpan.textContent = currentWord;
+            }
+          });
+          row.appendChild(cell);
+        }
+        table.appendChild(row);
+      }
+
+      // Función para verificar si la palabra seleccionada está en el diccionario
+      document
+        .getElementById("verifyBtn")
+        .addEventListener("click", function () {
+          const word = currentWord.toUpperCase();
+          if (dictionary[word]) {
+            definitionBox.style.display = "block";
+            definitionBox.innerHTML = `<strong>${word}</strong>: ${dictionary[word]}`;
+          } else {
+            definitionBox.style.display = "block";
+            definitionBox.innerHTML = `<strong>${word}</strong> no se encuentra en el diccionario. Intenta nuevamente.`;
+          }
+        });
+
+      // Función para limpiar la selección y reiniciar la palabra actual
+      document
+        .getElementById("resetBtn")
+        .addEventListener("click", function () {
+          currentWord = "";
+          currentWordSpan.textContent = "";
+          definitionBox.style.display = "none";
+          // Quitar la clase "selected" de todas las celdas
+          const cells = document.querySelectorAll("td.selected");
+          cells.forEach((cell) => cell.classList.remove("selected"));
+        });
+    </script>
+  </body>
+</html>
